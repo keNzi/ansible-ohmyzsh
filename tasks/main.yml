@@ -3,22 +3,25 @@
   apt: pkg=zsh,git state=latest
   register: installation
 
-- name: Backing up existing ~/.zshrc
-  shell: if [ -f ~/.zshrc ]; then mv ~/.zshrc{,.orig}; fi
-  when: installation|success
-  sudo: no
 
-- name: Cloning  oh-my-zsh
+- name: Cloning oh-my-zsh
+  become: yes
+  become_user: "{{ django_app_user }}"
   git:
-    repo=https://github.com/robbyrussell/oh-my-zsh
-    dest=~/.oh-my-zsh
+    repo: https://github.com/robbyrussell/oh-my-zsh
+    dest: ~/.oh-my-zsh
   when: installation|success
   register: cloning
-  sudo: no
+
 
 - name: Creating new ~/.zshrc
-  copy:
-    src=~/.oh-my-zsh/templates/zshrc.zsh-template
-    dest=~/.zshrc
+  become: yes
+  become_user: "{{ django_app_user }}"
+  template:
+    src: .zshrc
+    dest: ~/.zshrc
   when: cloning|success
-  sudo: no
+
+
+- name: Set zsh as default shell
+  user: name={{ django_app_user }} shell=/bin/zsh
